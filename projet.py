@@ -27,7 +27,7 @@ def clean_title(title):
 
 
 
-def book_explorer(url):
+def book_explorer(url, category_folder):
     product_page_url = url
 
     response = requests.get(product_page_url)
@@ -73,7 +73,7 @@ def book_explorer(url):
 
     image_response = requests.get(image_url)
     image_name = f"{title.replace('/', '_').replace(' ', '_').replace("'", "_")}.jpg"  # Nommer l'image avec le titre du livre
-    image_path = os.path.join(image_folder, image_name)
+    image_path = os.path.join("book_images/" + category_folder, image_name)
 
     with open(image_path, 'wb') as image_file:
         image_file.write(image_response.content)
@@ -86,33 +86,79 @@ def book_explorer(url):
 
 
 
-def get_datas(url):
+def get_datas(url, category):
     category_page = requests.get(url)
     soup = BeautifulSoup(category_page.text, 'html.parser')
 
     books = soup.find_all('h3')
-    with open('book_info.csv', mode='a', newline='', encoding='utf-8') as file:
+    print("-------------------------------------------------")
+    print("Category : " + category)
+    print("-------------------------------------------------")
+    # print(books)
+    csv_file_path = os.path.join('csv_files', f'{category}.csv')
+    with open(csv_file_path, mode='a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         for el in books:
             url_books = 'https://books.toscrape.com/catalogue/' + el.find('a')['href']
             url_books = url_books.replace('../', '')
-            print(url_books)
-            writer.writerow([book_explorer(url_books)[0], book_explorer(url_books)[1], book_explorer(url_books)[2], book_explorer(url_books)[3], book_explorer(url_books)[4], book_explorer(url_books)[5], book_explorer(url_books)[6], book_explorer(url_books)[7], book_explorer(url_books)[8]])
+            # print(url_books)
+            datas = book_explorer(url_books, category)
+            writer.writerow([datas[0], datas[1], datas[2], datas[3], datas[4], datas[5], datas[6], datas[7], datas[8]])
     try :
         next_page = soup.find('li', class_='next')
         next_page = next_page.find('a')['href']
         print("on change de page")
-        print("Nouvelle page : " + page_url + next_page)
+        print("Nouvelle page : " + category_url + next_page)
         print("-------------------------------------------------")
-        get_datas(page_url + next_page)
+        get_datas(category_url + next_page, category)
     except:
         return
-    
-with open('book_info.csv', mode='w', newline='', encoding='utf-8') as file:
-    writer = csv.writer(file)
-    writer.writerow(['universal_product_code', 'title', 'price_including_tax', 'price_excluding_tax', 'number_available', 'product_description', 'category', 'review_rating', 'image_url'])
-        
 
-page_url = "https://books.toscrape.com/catalogue/category/books/travel_2/"
-page_url = page_url.replace('index.html', '')
-get_datas(page_url)
+
+
+
+
+def make_csv(category):
+    csv_folder = 'csv_files'
+
+    if not os.path.exists(csv_folder):
+        os.makedirs(csv_folder)
+
+    csv_file_path = os.path.join(csv_folder, f'{category}.csv')
+    with open(csv_file_path, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(['universal_product_code', 'title', 'price_including_tax', 'price_excluding_tax', 'number_available', 'product_description', 'category', 'review_rating', 'image_url'])
+
+
+
+
+
+def get_categories(url):
+    global category_url
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    categories = soup.find_all('ul')[1]
+    categories = categories.find_all('a')
+    categories = categories[1:]
+    csv_folder = 'csv_files'
+    if os.path.exists(csv_folder):
+        shutil.rmtree(csv_folder)
+    os.makedirs(csv_folder)
+    for category in categories:
+        category_url = 'https://books.toscrape.com/' + category['href']
+        print("Catégorie url : " + category_url)
+        category_url = category_url.replace('index.html', '')
+        category_name = category.text.strip()
+        category_name = category_name.replace(' ', '_')
+
+        category_folder = os.path.join(image_folder, category_name)
+        if os.path.exists(category_folder):
+            shutil.rmtree(category_folder)
+        os.makedirs(category_folder)
+
+        print(category_name)
+        make_csv(category_name)
+        get_datas(category_url, category_name)
+
+get_categories('https://books.toscrape.com/index.html')
+category_url = ""
