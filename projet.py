@@ -101,7 +101,7 @@ def get_datas(url, category):
         for el in books:
             url_books = 'https://books.toscrape.com/catalogue/' + el.find('a')['href']
             url_books = url_books.replace('../', '')
-            # print(url_books)
+            print(url_books)
             datas = book_explorer(url_books, category)
             writer.writerow([datas[0], datas[1], datas[2], datas[3], datas[4], datas[5], datas[6], datas[7], datas[8]])
     try :
@@ -146,7 +146,7 @@ def get_categories(url):
     os.makedirs(csv_folder)
     for category in categories:
         category_url = 'https://books.toscrape.com/' + category['href']
-        print("Catégorie url : " + category_url)
+        # print("Catégorie url : " + category_url)
         category_url = category_url.replace('index.html', '')
         category_name = category.text.strip()
         category_name = category_name.replace(' ', '_')
@@ -156,7 +156,7 @@ def get_categories(url):
             shutil.rmtree(category_folder)
         os.makedirs(category_folder)
 
-        print(category_name)
+        # print(category_name)
         make_csv(category_name)
         get_datas(category_url, category_name)
 
