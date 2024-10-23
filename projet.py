@@ -1,6 +1,31 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
+import os
+import shutil
+
+image_folder = 'book_images'
+if os.path.exists(image_folder):
+    shutil.rmtree(image_folder)
+os.makedirs(image_folder)
+
+
+
+def clean_title(title):
+    valid_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- "
+    new_title = ''
+    new_count = 0
+    for i in range(len(title)):
+        if title[i] in valid_chars:
+            new_title += title[i]
+            new_count += 1
+        else:
+            if len(new_title) > new_count+1 and new_title[new_count + 1] in valid_chars:
+                new_title += '_'
+                new_count += 1
+    return new_title
+
+
 
 def book_explorer(url):
     product_page_url = url
@@ -14,6 +39,7 @@ def book_explorer(url):
     universal_product_code = td.text
 
     title = soup.find('h1').text
+    title = clean_title(title)
     # print(title)
 
     price_including_tax = tr[3]
@@ -44,6 +70,14 @@ def book_explorer(url):
     image_url = soup.find('img')['src']
     image_url = 'https://books.toscrape.com/' + image_url
     # print(image_url)
+
+    image_response = requests.get(image_url)
+    image_name = f"{title.replace('/', '_').replace(' ', '_').replace("'", "_")}.jpg"  # Nommer l'image avec le titre du livre
+    image_path = os.path.join(image_folder, image_name)
+
+    with open(image_path, 'wb') as image_file:
+        image_file.write(image_response.content)
+
 
     return (universal_product_code, title, price_including_tax, price_excluding_tax, number_available, product_description, category, review_rating, image_url)
 
@@ -79,5 +113,6 @@ with open('book_info.csv', mode='w', newline='', encoding='utf-8') as file:
     writer.writerow(['universal_product_code', 'title', 'price_including_tax', 'price_excluding_tax', 'number_available', 'product_description', 'category', 'review_rating', 'image_url'])
         
 
-page_url = "https://books.toscrape.com/catalogue/category/books/sequential-art_5/"
+page_url = "https://books.toscrape.com/catalogue/category/books/travel_2/"
+page_url = page_url.replace('index.html', '')
 get_datas(page_url)
