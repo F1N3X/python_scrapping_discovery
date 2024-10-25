@@ -11,16 +11,16 @@ You will have to create your virtual environment.
 
 ### For windows users :
 ``` bash
-python3 -m venv env
+python -m venv env
 
-source env/bin/activate
+env\Scripts\activate
 ```
 
 ### For mac/linux users :
 ``` bash
-python -m venv env
+python3 -m venv env
 
-env\Scripts\activate
+source env/bin/activate
 ```
 
 Then, use this command line in your terminal :
@@ -31,4 +31,9 @@ pip install -r requirements.txt
 ## And finally run the projet.py file or use this :
 ``` bash
 Python project.py
+```
+
+### You wille also have the possibility to create a graphic of the datas generated :
+``` bash
+Python graph.py
 ```
